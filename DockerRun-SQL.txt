@@ -1,0 +1,8 @@
+docker run -d \
+  --name oracle-xe \
+  -p 1521:1521 \
+  -e ORACLE_PWD=Oracle123 \
+  -v oracle-data:/opt/oracle/oradata \
+  -v $(pwd)/init.sql:/opt/oracle/scripts/setup/01-init.sql \
+  -v $(pwd)/CriacaoBD.sql:/opt/oracle/scripts/setup/02-CriacaoBD.sql \
+  container-registry.oracle.com/database/express:21.3.0
