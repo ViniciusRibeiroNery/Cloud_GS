@@ -1,351 +1,115 @@
-# 🔥 SafeHeat - Backend Java
+# 🌡️ SafeHeat - Backend em Container
 
-[![GitHub Repo](https://img.shields.io/badge/GitHub-Repository-blue)](https://github.com/felipesora/safeheat-backend-java)
-
->API desenvolvida para o projeto SafeHeat, com o objetivo de ajudar pessoas a se protegerem de eventos climáticos extremos,
-> especialmente ondas de calor.
-
-## 📝 Descrição do Projeto
-
-**SafeHeat** é uma API desenvolvida para monitorar e alertar usuários sobre eventos de calor extremo em locais previamente cadastrados. A solução visa contribuir com a prevenção de riscos à saúde, especialmente em um cenário de mudanças climáticas severas, oferecendo informações atualizadas e organização dos locais mais vulneráveis.
-
-Este projeto foi desenvolvido como parte do desafio interdisciplinar "**Protech the Future**" da FIAP, que propõe soluções tecnológicas inovadoras para enfrentar problemas causados por eventos extremos da natureza.
-Com a API desenvolvida em Java, é possível:
+Repositório da API SafeHeat, desenvolvida para alertar e monitorar a população em casos de calor extremo, com foco em **resiliência climática** e **uso de tecnologias em nuvem**. Este projeto faz parte do desafio **"Protech the Future" da FIAP**, e foi containerizado utilizando **Docker e Oracle XE**.
 
 ---
 
-## 🚀 Funcionalidades da API
+## 📝 Visão Geral
 
-- ✅ Cadastro e gerenciamento de usuários
-- ✅ Cadastro de locais monitorados
-- ✅ Registro e consulta de alertas de calor- Associar um **status atual** à moto (ex: Em análise, Em manutenção, Disponível).
-- ✅ Associação entre usuários, locais e alertas
-- ✅ Atualização e exclusão de registros
+A API do SafeHeat foi criada para:
 
----
-
-## 👥 Integrantes
-
-- **Felipe Ulson Sora** – RM555462 – [@felipesora](https://github.com/felipesora)
-- **Augusto Lope Lyra** – RM558209 – [@lopeslyra10](https://github.com/lopeslyra10)
-- **Vinicius Ribeiro Nery Costa** – RM559165 – [@ViniciusRibeiroNery](https://github.com/ViniciusRibeiroNery)
-
----
-## 🛠️ Tecnologias Utilizadas
-- Java 21
-- Spring Boot 3.4.4
-- Maven
-- Banco de dados Oracle
-- JPA (Hibernate)
-- Validação com Jakarta Bean Validation
-- Documentação com Springdoc OpenAPI (Swagger)
-- RESTful APIs
+- 📍 Cadastrar locais monitorados
+- 🌡️ Registrar alertas de calor extremo
+- 👤 Gerenciar usuários e suas relações com os locais monitorados
+- 📦 Persistir os dados em um banco Oracle
+- 🐳 Executar via containers com Docker
 
 ---
 
+## 🛠️ Requisitos para Executar
 
-## 🔄 Relação entre os Endpoints
+- [Docker](https://www.docker.com/) instalado na máquina
+- [SQL Developer](https://www.oracle.com/database/sqldeveloper/) (opcional, para visualizar os dados no banco)
+- Terminal (cmd, bash ou PowerShell)
 
-Abaixo estão as relações entre os recursos da API (`Usuário`, `Local Monitorado` e `Alerta de Calor`), detalhando como os dados se conectam entre os endpoints.
+---
 
-### 📘 Diagrama de Relacionamento
+## 🚀 Como Rodar o Projeto Localmente
+
+### 1. Subir o Banco de Dados Oracle XE (Container)
 
 ```bash
-[Usuário]
-   │
-   └──▶ (1:N) ─── [Local Monitorado]
-                       │
-                       └──▶ (1:N) ─── [Alerta de Calor]
-```
-### 📌 Relações Explicadas
+docker run -d \
+  --name oracle-xe \
+  -p 1521:1521 \
+  -e ORACLE_PWD=Oracle123 \
+  -v oracle-data:/opt/oracle/oradata \
+  -v $(pwd)/init.sql:/opt/oracle/scripts/setup/01-init.sql \
+  -v $(pwd)/CriacaoBD.sql:/opt/oracle/scripts/setup/02-CriacaoBD.sql \
+  container-registry.oracle.com/database/express:21.3.0
+⚠️ Observação: pode ser necessário executar docker login container-registry.oracle.com para usar essa imagem oficial da Oracle.
 
-- **Usuário ↔ Local Monitorado**
-  - Cada local monitorado pertence a um único usuário (`id_usuario`).
-  - Um usuário pode possuir **vários locais** monitorados.
-  - No endpoint `POST /locais`, é obrigatório informar o `id_usuario`.
+2. Build da Imagem da Aplicação Java
+bash
+Copiar
+Editar
+docker build -f Dockerfile-java.dockerfile -t safeheat-api .
+3. Rodar a Aplicação
+bash
+Copiar
+Editar
+docker run -d --name safeheat-api -p 8080:8080 safeheat-api
+📫 Acesso à API
+Após a execução, a API estará disponível em:
 
+arduino
+Copiar
+Editar
+http://localhost:8080
+Você poderá acessar os endpoints utilizando ferramentas como:
 
-- **Local Monitorado ↔ Alerta de Calor**
-  - Cada alerta está vinculado a um único local monitorado (`id_local`).
-  - Um local pode ter **múltiplos alertas** de calor registrados.
-  - No endpoint `POST /alertas`, é obrigatório informar o `id_local`.
+Postman
 
-### 🔗 Exemplo de Fluxo de Dados
+Insomnia
 
-1. `POST /usuarios` – Cria o usuário.
-2. `POST /locais` – Cria um local vinculado ao `id_usuario` criado anteriormente.
-3. `POST /alertas` – Cria um alerta vinculado ao `id_local` do local criado.
+Navegador (para testes simples com GET)
 
----
+Ou via Swagger: http://localhost:8080/swagger-ui/index.html (se configurado)
 
-## 📡 Endpoints da API
+💾 Acesso ao Banco Oracle via SQL Developer
+Para visualizar os dados persistidos:
 
-Abaixo estão listados os principais endpoints da API do **SafeHeat**, divididos por entidade. Nos endpoints que requerem envio de dados (POST/PUT), são fornecidos exemplos de JSON.
+Campo	Valor
+Host	localhost
+Porta	1521
+Service	XEPDB1
+Usuário	system
+Senha	Oracle123
 
----
+🔄 Teste de Persistência (para vídeo ou prints)
+Crie um registro via API (POST)
 
-### 👤 Usuário
+Confirme via SQL Developer com SELECT
 
-- `📬 POST - /usuarios`  
-  Cadastra um novo usuário.
-
-```jsonc
-{
-  "nome": "João Silva",
-  "email": "joao@example.com",
-  "senha": "123456"
-}
-```
+Reinicie o banco: docker restart oracle-xe
 
-- `📄 GET - /usuarios`  
-  Lista todas os usuários cadastrados, com seus locais e alertas cadastrados.
+Execute o SELECT novamente e comprove que os dados continuam no banco ✅
 
-![GET usuarios](images/get-usuarios.png)
+🎥 Entrega em Vídeo
+Demonstre o uso do Docker para subir banco e aplicação
 
-- `🔍 GET BY ID - /usuarios/{id}`  
-  Lista o usuário cadastrado com este id.
+Mostre as operações CRUD funcionando
 
-![GET ID usuarios](images/get-id-usuarios.png)
+Confirme a persistência dos dados no Oracle após reiniciar
 
-- `✏️ PUT - /usuarios/{id}`  
-  Atualiza os dados do usuário com este id.
+Utilize o SQL Developer e/ou Swagger/Postman para validação
 
-```jsonc
-{
-  "nome": "João da Silva",
-  "email": "joao@example.com",
-  "senha": "senha123456"
-}
-```
+👥 Integrantes
+Felipe Ulson Sora – RM555462 – @felipesora
 
-- `🗑️ DELETE - /usuarios/deletar/{id}`  
-  Remove o usuário com este id.
+Augusto Lope Lyra – RM558209 – @lopeslyra10
 
----
+Vinicius Ribeiro Nery Costa – RM559165 – @ViniciusRibeiroNery
 
-### 🗺️ Local Monitorado
+✅ Requisitos Atendidos
+ API Java funcional
 
-- `📬 POST - /locais`  
-  Cadastra um novo local para ser monitorado.
+ Container do banco Oracle com volume e script SQL
 
-```jsonc
-{
-  "nome": "Parque Central",
-  "rua": "Rua das Flores",
-  "numero": "123",
-  "complemento": "Próximo ao lago",
-  "bairro": "Centro",
-  "cidade": "São Paulo",
-  "estado": "SP",
-  "cep": "01234-567",
-  "id_usuario": 1
-}
-```
+ Dockerfile com usuário não-root
 
-- `📄 GET - /locais`  
-  Lista todos os locais cadastrados.
+ Variáveis de ambiente configuradas
 
-![GET locais](images/get-locais.png)
+ CRUD com persistência confirmada
 
-- `🔍 GET BY ID - /locais/{id}`  
-  Lista o local cadastrado com este id.
-
-![GET ID locais](images/get-id-alertas.png)
-
-- `✏️ PUT - /locais/{id}`  
-  Atualiza os dados do local com este id.
-
-```jsonc
-{
-  "nome": "Praça da Liberdade",
-  "rua": "Av. Liberdade",
-  "numero": "456",
-  "complemento": "Em frente ao monumento",
-  "bairro": "Liberdade",
-  "cidade": "São Paulo",
-  "estado": "SP",
-  "cep": "01502-000",
-  "id_usuario": 1
-}
-```
-
-- `🗑️ DELETE - /locais/{id}`  
-  Remove o local com este id.
-
----
-
-### 🌡️ Alerta de Calor
-
-- `📬 POST - /alertas`  
-  Cadastra um novo alerta de calor ligado à um local.
-
-```jsonc
-{
-  "temperatura": "42",
-  "mensagem": "Risco de insolação — evite exposição prolongada ao sol.",
-  "data_alerta": "2025-05-27T14:00:00Z",
-  "nivel_risco": "Alto",
-  "id_local": 2
-}
-```
-
-- `📄 GET - /alertas`  
-  Lista todos os alertas de calor cadastradas.
-
-![GET alertas](images/get-alertas.png)
-
-- `🔍 GET BY ID - /alertas/{id}`  
-  Lista o alerta de calor cadastrado com este id.
-
-![GET ID alertas](images/get-id-alertas.png)
-
-- `✏️ PUT - /alertas/{id}`  
-  Atualiza os dados do alerta de calor com este id.
-
-```jsonc
-{
-  "temperatura": "40",
-  "mensagem": "Temperatura crítica. Mantenha-se hidratado.",
-  "data_alerta": "2025-05-28T12:00:00Z",
-  "nivel_risco": "Moderado",
-  "id_local": 2
-}
-```
-
-- `🗑️ DELETE - /alertas/{id}`  
-  Remove o alerta de calor com este id.
-
----
-
-## ☁️ Deploy e URL da API
-
-O backend do SafeHeat está disponível em produção, permitindo que qualquer aplicação (mobile, web ou cliente HTTP) consuma os endpoints diretamente pela internet.
-
-### 🌐 URL Pública da API
-
-> 📎 Base URL: https://safeheat-backend-java.onrender.com
-
-Você pode acessar diretamente a documentação Swagger da API:
-
-```bash
-https://https://safeheat-backend-java.onrender.com/swagger-ui/index.html
-```
-
-### 🚀 Plataforma de Deploy
-A API foi hospedada utilizando:
-
-- Render para deploy automatizado
-- Integração com GitHub
-- Build com Maven + Java 21
-- Banco de dados Oracle
-
-
----
-
-## 🚀 Como Executar o Projeto
-
-Siga os passos abaixo para rodar o backend do **SafeHeat** localmente na sua máquina:
-
-### 🔧 Pré-requisitos
-
-Certifique-se de ter as seguintes ferramentas instaladas:
-
-- **Java 21** ou superior
-- **IDE** (como IntelliJ IDEA ou Eclipse)
-- **Postman** (para testar os endpoints)
-
----
-
-### 📥 1. Clonar o repositório
-
-Abra o terminal e clone o projeto:
-
-```bash
-git clone https://github.com/felipesora/safeheat-backend-java.git
-```
-
-### 📦 2. Configurar o Banco de Dados
-
-No arquivo `application.properties` (em `src/main/resources`), configure os dados do banco Oracle:
-
-```bash
-spring.datasource.url=jdbc:oracle:thin:@//localhost:1521/XEPDB1
-spring.datasource.username=SEU_USUARIO
-spring.datasource.password=SUA_SENHA
-```
-
-### ⚙️ 3. Compilar e rodar o projeto
-
-Abra o projeto na sua IDE (como IntelliJ ou Eclipse) e clique no **botão verde de "play"** na classe principal: (em `src/main/java/br/com/fiap/safeheat_backend_java/SafeheatBackendJavaApplication.java`):
-
-O servidor será iniciado por padrão em:
-
-```bash
-http://localhost:8080/
-```
-
-### 📬 4. Testar com Postman
-
-Abra o Postman e use os endpoints listados na seção anterior.
-
-### 📖 5. Testar com Swagger UI
-
-A API SafeHeat possui integração com o Swagger UI através do Springdoc OpenAPI, que permite testar e explorar todos os endpoints diretamente pelo navegador, de forma interativa e visual.
-
-**Como acessar o Swagger UI:**
-- Com a aplicação rodando localmente (`http://localhost:8080`), abra seu navegador e acesse o seguinte endereço:
-
-```bash
-http://localhost:8080/swagger-ui/index.html
-```
-
-**O que você encontrará no Swagger UI:**
-
-- Documentação automática de todos os endpoints da API, incluindo métodos, parâmetros, tipos e exemplos.
-
-- Interface interativa para enviar requisições HTTP (GET, POST, PUT, DELETE) e visualizar respostas diretamente na página.
-
-- Possibilidade de preencher os dados de entrada via formulário e testar a API sem precisar de ferramentas externas.
-
-- Visualização dos modelos (DTOs/Entidades) usados nas requisições e respostas, com validações.
-
-![Swagger UI](images/swagger.png)
-
-![Endpoints do Swagger](images/endpoints-swagger.png)
----
-
-### ✅ Pronto!
-Agora você pode testar todos os recursos do **SafeHeat** diretamente via API REST, utilizando o Postman ou outra ferramenta de sua preferência.
-
----
-
-## 🎥 Demonstrações e Links Relacionados
-
-### 📽️ Vídeo de Demonstração da Solução Completa
-Veja o funcionamento completo da solução SafeHeat (Backend Java):
-
-[🔗 Assista à demonstração](https://www.youtube.com/watch?v=8jetkaAdImw)
-
----
-
-### 🗣️ Vídeo Pitch do Projeto
-
-Entenda o contexto, problema, solução proposta e impacto social do SafeHeat no nosso pitch oficial:
-
-[🔗 Assista ao Pitch](https://github.com/felipesora)
-
----
-
-### 🏛️ Backend .NET (Gestão Pública)
-
-Aplicação web e API para prefeituras e órgãos públicos gerenciarem abrigos e recursos durante eventos extremos.
-
-[🔗 Repositório Backend .NET](https://github.com/felipesora/safeheat-backend-dotnet)
-
-### 📱 Projeto Mobile (React Native)
-
----
-
-Frontend mobile desenvolvido com React Native, integrando as APIs de Java e .NET:
-
-[🔗 Repositório do Mobile (SafeHeat App)](https://github.com/felipesora/safeheat-frontend-mobile)
+ Documentação clara e vídeo explicativo
